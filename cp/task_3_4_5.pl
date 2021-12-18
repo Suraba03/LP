@@ -1,7 +1,3 @@
-%
-% use our knowledge base (parsed .ged file)
-%
-
 child('William Shakespeare', 'John Shakespeare').
 child('William Shakespeare', 'Mary Arden').
 child('Mary Arden', 'Robert Arden').
@@ -21,8 +17,6 @@ child('Margaret Shakespeare', 'John Shakespeare').
 child('Margaret Shakespeare', 'Mary Arden').
 child('Gilbert Shakespeare', 'John Shakespeare').
 child('Gilbert Shakespeare', 'Mary Arden').
-child('Joan Shakespeare', 'John Shakespeare').
-child('Joan Shakespeare', 'Mary Arden').
 child('Anne Shakespeare', 'John Shakespeare').
 child('Anne Shakespeare', 'Mary Arden').
 child('Richard Shakespeare', 'John Shakespeare').
@@ -72,48 +66,124 @@ female('Elizabeth Shakespeare').
 female('Margaret Wheeler').
 female(' Unknown').
 
-%
-% task 3 ---------------------------------
-%
+% 3 ------------------------------------------------
 
-% sibling predicate
+sibling(Self, Sibling) :-
+    child(Self, ParentSelf),
+    child(Sibling, ParentSelf),
+    male(ParentSelf),
+    Self \= Sibling.
 
-sibling(X, Y) :-
-	child(X, Z),
-	child(Y, Z),
-	male(Z),
-	Y \= X.
-sibling(X, Y) :-
-	child(X, Z),
-	child(Y, Z),
-	female(Z),
-	Y \= X.
+firstCousin(Self, Cousin) :-
+    child(Self, ParentSelf),
+    sibling(ParentSelf, ParentCousin),
+    child(Cousin, ParentCousin).
 
+secondCousin(Self, SecondCousin) :-
+    child(Self, ParentSelf),
+    firstCousin(ParentSelf, ParentSecondCousin),
+    child(SecondCousin, ParentSecondCousin).
 
+% 4 ------------------------------------------------
 
-% first cousin (second sibling) predicate
+% SIMPLE pattern to search
 
-cousin(X, Y) :-
-	child(X, Z),
-	sibling(Z, V),
-	child(Y, V). 
+pattern('sibling', X, Y) :-
+    sibling(X, Y).
+pattern('first cousin', X, Y) :-
+    firstCousin(X, Y).
+pattern('second cousin', X, Y) :-
+    secondCousin(X, Y).
+pattern('brother', X, Y) :-
+    sibling(X, Y),
+    male(Y).
+pattern('sister', X, Y) :-
+    sibling(X, Y),
+    female(Y).
+pattern('mother', X, Y) :-
+    child(X, Y),
+    female(Y).
+pattern('father', X, Y) :-
+    child(X, Y),
+    male(Y).
+pattern('daughter', X, Y) :-
+    child(Y, X),
+    female(Y).
+pattern('son', X, Y) :-
+    child(Y, X),
+    male(Y).
 
-% second cousin (third sibling) predicate
+% MOVE to the next node of the genealogic tree
 
-secondcousin(X, Y) :-
-	child(X, Z),
-	cousin(Z, V),
-	child(Y, V).
+move(X, Y) :- child(X, Y).
+move(X, Y) :- child(Y, X).
+move(X, Y) :- sibling(X, Y).
+move(X, Y) :- sibling(Y, X).
 
+% DF search 
 
-%
-% task 4 ---------------------------------
-% 
+dfs(Relation, X, Y) :-
+    pattern(Relation, X, Y), !.
+dfs(Relation, X, Y) :-
+    move(X, Y),
+    dfs(Relation, X, Y).
 
-% it's still empty here...
+% DF search for all relatives and relations
 
-%
-% task 5 ---------------------------------
-% 
+dfs_all(Relation, X, Y) :-
+    pattern(Relation, X, Y).
+dfs_all(Relation, X, Y) :-
+    move(X, Y),
+    dfs_all(Relation, X, Y).
 
-% it's still empty here...
+% DF ID search
+
+inf_integers(1).
+inf_integers(N) :-
+    inf_integers(N1),
+    N is N1 + 1.
+
+dfs_bounded(Relation, X, Y, _) :-
+    pattern(Relation, X, Y).
+dfs_bounded(Relation, X, Y, N) :-
+    N > 0,
+    move(X, Y),
+    N1 is N - 1,
+    dfs_bounded(Relation, X, Y, N1).
+
+dfs_id(Relation, X, Y) :-
+    inf_integers(N),
+    dfs_bounded(Relation, X, Y, N), !.
+
+% DF ID search for all relatives and relations
+
+dfs_id_all(Relation, X, Y) :-
+    inf_integers(N),
+    dfs_bounded(Relation, X, Y, N).
+
+% pretty OUTPUT
+
+find_a_relation(X, Y) :-
+    dfs(Relation, X, Y),
+    write(Y), write(" is "), write(X),
+    write("`s "), write(Relation), write("."), nl.
+
+find_all_relations(X, Y) :-
+    dfs_all(Relation, X, Y),
+    write(Y), write(" is "), write(X),
+    write("`s "), write(Relation), write("."), nl.
+
+find_a_relative(Relation, X) :-
+    dfs(Relation, X, Y), 
+    write(Relation), write(" of "), write(X),
+    write(" is "), write(Y), write("."), nl.
+
+find_all_relatives(Relation, X) :-
+    dfs_all(Relation, X, Y), 
+    write(Relation), write(" of "), write(X),
+    write(" is "), write(Y), write("."), nl.
+    
+
+% 5 -------------------------------------------------
+
+% Its still empty here...

@@ -113,7 +113,7 @@ pattern('son', X, Y) :-
     child(Y, X),
     male(Y).
 
-% MOVE to the next node of the genealogic tree
+% MOVE to the next node of the genealogic tree 
 
 move(X, Y) :- child(X, Y).
 move(X, Y) :- child(Y, X).
@@ -135,31 +135,6 @@ dfs_all(Relation, X, Y) :-
 dfs_all(Relation, X, Y) :-
     move(X, Y),
     dfs_all(Relation, X, Y).
-
-% DF ID search
-
-inf_integers(1).
-inf_integers(N) :-
-    inf_integers(N1),
-    N is N1 + 1.
-
-dfs_bounded(Relation, X, Y, _) :-
-    pattern(Relation, X, Y).
-dfs_bounded(Relation, X, Y, N) :-
-    N > 0,
-    move(X, Y),
-    N1 is N - 1,
-    dfs_bounded(Relation, X, Y, N1).
-
-dfs_id(Relation, X, Y) :-
-    inf_integers(N),
-    dfs_bounded(Relation, X, Y, N), !.
-
-% DF ID search for all relatives and relations
-
-dfs_id_all(Relation, X, Y) :-
-    inf_integers(N),
-    dfs_bounded(Relation, X, Y, N).
 
 % pretty OUTPUT
 
@@ -186,4 +161,74 @@ find_all_relatives(Relation, X) :-
 
 % 5 -------------------------------------------------
 
-% Its still empty here...
+relation(X) :-
+    member(X, ['sibling', 'first cousin', 'second cousin', 'second cousin', 'brother', 'sister', 'mother', 'father', 'daughter', 'son']).
+
+question_word(X) :-
+    member(X, [who, what]).
+
+auxiliary_word(X) :-
+    member(X, [is, are]).
+
+linkage(X) :-
+    member(X, [to, between, all, relation, and]).
+
+question_mark(X) :-
+    member(X, ['?']).
+
+
+% who is Relation to Self? --- who is brother to 'William Shakespeare'?
+	% answer: 'name name' 
+ask(List) :-
+    List = [A, B, C, D, E, F],
+    question_word(A),
+    auxiliary_word(B),
+    relation(C),
+    linkage(D),
+    (male(E); female(E)),
+	question_mark(F),
+    find_a_relative(C, E).
+    
+
+% who are all Relation to Self? --- who are all 'second cousin' to 'William Shakespeare'?
+	% answer:  'name1 name1'; 'name2 name2'; ...
+ask(List) :-
+    List = [A, B, I, C, D, E, F],
+    question_word(A),
+    auxiliary_word(B),
+    linkage(I),
+    relation(C),
+    linkage(D),
+    (male(E); female(E)),
+	question_mark(F),
+    find_all_relatives(C, E).
+    
+% what is relation between Self and Relative? --- what is relation between 'William Shakespeare' and 'Mary Arden'?
+	% answer: 'mother'
+ask(List) :-
+    List = [A, B, C, D, E, F, G, H],
+    question_word(A),
+    auxiliary_word(B),
+    linkage(C),
+    linkage(D),
+    (male(E); female(E)),
+    linkage(F),
+    (male(G); female(G)),
+	question_mark(H),
+    find_a_relation(E, G).
+
+% what are all relations between Self and Relative? --- what are all relations between 'William Shakespeare' and 'Mary Arden'?
+	% answer: 'relation1'; 'relation2'; ...
+
+ask(List) :-
+    List = [A, B, I, C, D, E, F, G, H],
+    question_word(A),
+    auxiliary_word(B),
+    linkage(I),
+    linkage(C),
+    linkage(D),
+    (male(E); female(E)),
+    linkage(F),
+    (male(G); female(G)),
+	question_mark(H),
+    find_all_relations(E, G).
